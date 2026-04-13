@@ -45,17 +45,20 @@
             padding: 2rem;
             border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
         }
 
-        h2 { font-weight: 400; color: var(--primary); margin-top: 0; }
+        h2 { font-weight: 400; color: var(--primary); margin-top: 0; margin-bottom: 1.5rem; }
 
         .input-group { margin-bottom: 1.5rem; text-align: left; }
         label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
         input {
             width: 100%; padding: 12px; background: rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-            color: white; font-size: 1.1rem; box-sizing: border-box;
+            color: white; font-size: 1.1rem; box-sizing: border-box; outline: none;
         }
+        input:focus { border-color: var(--primary); }
 
         .display-box {
             background: rgba(0,0,0,0.2);
@@ -67,7 +70,6 @@
         .val { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; display: block; }
         .label-small { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
 
-        /* Botões */
         .btn-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr 1fr; 
@@ -80,56 +82,101 @@
             font-size: 0.75rem;
         }
         .btn-main { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; grid-column: span 3; font-size: 0.9rem; }
-        .btn-receive { background: var(--success); color: #064e3b; grid-column: span 3; font-size: 0.9rem; }
+        .btn-receive { background: var(--success); color: #064e3b; grid-column: span 3; font-size: 0.9rem; margin-bottom: 10px; }
         .btn-reset { background: #334155; color: white; }
-        .btn-clear { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .btn-clear { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
         
         button:hover { opacity: 0.9; transform: translateY(-2px); }
         .btn-clear:hover { background: var(--danger); color: white; }
 
-        /* Histórico */
-        .history-container { max-height: 500px; overflow-y: auto; padding-right: 10px; }
+        /* ESTILO DO HISTÓRICO E SCROLLBAR */
+        .history-container { 
+            max-height: 380px; /* Altura ideal para mostrar cerca de 4 itens antes do scroll */
+            overflow-y: auto; 
+            padding-right: 12px;
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--secondary) transparent; /* Firefox */
+        }
+
+        /* Scrollbar Estilizada para Chrome, Safari e Edge */
+        .history-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+        }
+
+        .history-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--primary), var(--secondary));
+            border-radius: 10px;
+            border: 2px solid transparent;
+        }
+
+        .history-container::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
         .history-item {
             background: rgba(255,255,255,0.03);
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 0.8rem;
+            padding: 1.2rem;
+            border-radius: 16px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-left: 4px solid var(--success);
+            animation: fadeIn 0.4s ease-out;
         }
-        .history-info { text-align: left; }
-        .history-date { font-size: 0.75rem; color: #64748b; }
-        .history-amount { font-weight: 700; color: var(--success); }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .history-info { text-align: left; }
+        .history-date { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
+        .history-amount { font-weight: 700; color: var(--success); font-size: 1.1rem; }
+
+        .btn-del {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
 
 <div class="main-wrapper">
     <div class="card">
-        <h2>Tracker</h2>
+        <h2>Painel de Controle</h2>
         <div class="input-group">
-            <label>Valor da Hora (R$)</label>
-            <input type="number" id="hourly-rate" placeholder="0,00" onchange="saveConfig()">
+            <label>Sua Hora (R$)</label>
+            <input type="number" id="hourly-rate" placeholder="Digite o valor da hora" onchange="saveConfig()">
         </div>
 
         <div class="display-box">
-            <span class="label-small">Tempo de Sessão</span>
+            <span class="label-small">Sessão Atual</span>
             <span id="time-display" class="val">00:00:00</span>
         </div>
 
         <div class="display-box">
-            <span class="label-small">Ganhos Atuais</span>
+            <span class="label-small">Ganhos em Tempo Real</span>
             <span id="money-display" class="val" style="color: var(--success)">R$ 0,00</span>
         </div>
 
+        <button id="btn-toggle" class="btn-main" onclick="toggleTimer()">Iniciar Trabalho</button>
+        <button id="btn-receive" class="btn-receive" onclick="receivePayment()" style="display: none;">Receber e Finalizar</button>
+        
         <div class="btn-grid">
-            <button id="btn-toggle" class="btn-main" onclick="toggleTimer()">Iniciar Trabalho</button>
-            <button id="btn-receive" class="btn-receive" onclick="receivePayment()" style="display: none;">Receber Agora</button>
             <button class="btn-reset" onclick="resetTimer()">Resetar</button>
             <button class="btn-clear" style="grid-column: span 2;" onclick="clearAllData()">Apagar Tudo</button>
         </div>
@@ -137,8 +184,8 @@
 
     <div class="card">
         <h2>Histórico de Ganhos</h2>
-        <div class="display-box" style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2);">
-            <span class="label-small" style="color: var(--success)">Total Acumulado (Geral)</span>
+        <div class="display-box" style="background: rgba(74, 222, 128, 0.05); border: 1px solid rgba(74, 222, 128, 0.1);">
+            <span class="label-small" style="color: var(--success)">Total Acumulado Geral</span>
             <span id="total-general" class="val" style="color: var(--success)">R$ 0,00</span>
         </div>
         
@@ -150,7 +197,6 @@
 <script>
     let seconds = 0;
     let timerInterval = null;
-    let hourlyRate = 0;
     let history = JSON.parse(localStorage.getItem('salaryHistory')) || [];
 
     window.onload = () => {
@@ -185,14 +231,14 @@
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
-            btn.innerText = "Retomar";
+            btn.innerText = "Retomar Trabalho";
             rateInput.disabled = false;
         } else {
-            hourlyRate = parseFloat(rateInput.value) || 0;
-            if (hourlyRate <= 0) return alert("Defina o valor da hora!");
+            const currentRate = parseFloat(rateInput.value) || 0;
+            if (currentRate <= 0) return alert("Por favor, defina o valor da sua hora primeiro!");
             
             rateInput.disabled = true;
-            btn.innerText = "Pausar";
+            btn.innerText = "Pausar Sessão";
             timerInterval = setInterval(() => {
                 seconds++;
                 updateDisplay();
@@ -210,7 +256,7 @@
             id: Date.now(),
             amount: earned,
             duration: document.getElementById('time-display').innerText,
-            date: new Date().toLocaleString('pt-BR')
+            date: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
         };
 
         history.unshift(entry);
@@ -234,7 +280,7 @@
                         <div class="history-amount">${item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
                         <div class="history-date">${item.date} • ${item.duration}</div>
                     </div>
-                    <button onclick="deleteEntry(${item.id})" style="background:none; color:#ef4444; font-size:1.2rem; padding:5px;">&times;</button>
+                    <button class="btn-del" onclick="deleteEntry(${item.id})">&times;</button>
                 </div>
             `;
         });
@@ -256,18 +302,14 @@
         updateDisplay();
     }
 
-    // NOVA FUNÇÃO: APAGAR TUDO
     function clearAllData() {
-        const confirmacao = confirm("⚠️ ATENÇÃO: Isso apagará permanentemente todo o seu histórico de recebimentos e configurações. Deseja continuar?");
-        
-        if (confirmacao) {
+        if (confirm("⚠️ Deseja apagar todo o histórico e configurações? Esta ação não pode ser desfeita.")) {
             localStorage.clear();
             history = [];
             seconds = 0;
             document.getElementById('hourly-rate').value = '';
             resetTimer();
             updateHistoryUI();
-            alert("Todos os dados foram removidos.");
         }
     }
 </script>
