@@ -3,173 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salary Tracker Pro</title>
+    <title>Salary Tracker Pro | Dashboard</title>
     <style>
         :root {
             --primary: #00d2ff;
             --secondary: #3a7bd5;
+            --success: #4ade80;
+            --danger: #ef4444;
             --bg: #0f172a;
             --card-bg: rgba(255, 255, 255, 0.05);
             --text: #f8fafc;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: var(--text);
+            margin: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
         }
 
-        .container {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 2.5rem;
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        .main-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2rem;
+            max-width: 1100px;
             width: 100%;
-            max-width: 450px;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .main-wrapper { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        h2 { font-weight: 400; color: var(--primary); margin-top: 0; }
+
+        .input-group { margin-bottom: 1.5rem; text-align: left; }
+        label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        input {
+            width: 100%; padding: 12px; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+            color: white; font-size: 1.1rem; box-sizing: border-box;
+        }
+
+        .display-box {
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1rem;
             text-align: center;
         }
+        .val { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; display: block; }
+        .label-small { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
 
-        h1 {
-            font-weight: 300;
-            letter-spacing: 1px;
-            margin-bottom: 2rem;
-            color: var(--primary);
+        /* Botões */
+        .btn-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 10px; 
+            margin-top: 1rem; 
         }
-
-        .input-group {
-            margin-bottom: 2rem;
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: white;
-            font-size: 1.1rem;
-            outline: none;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-
-        input:focus {
-            border-color: var(--primary);
-        }
-
-        .display-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 1.5rem;
-            border-radius: 16px;
-            border-bottom: 3px solid var(--secondary);
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-family: 'Courier New', monospace;
-            font-size: 2.2rem;
-            font-weight: bold;
-        }
-
-        #money-display {
-            color: #4ade80;
-        }
-
-        .controls {
-            display: flex;
-            gap: 1rem;
-        }
-
         button {
-            flex: 1;
-            padding: 12px;
-            border: none;
+            padding: 14px; border: none; border-radius: 12px; font-weight: 600;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        .btn-main { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; grid-column: span 3; font-size: 0.9rem; }
+        .btn-receive { background: var(--success); color: #064e3b; grid-column: span 3; font-size: 0.9rem; }
+        .btn-reset { background: #334155; color: white; }
+        .btn-clear { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        
+        button:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-clear:hover { background: var(--danger); color: white; }
+
+        /* Histórico */
+        .history-container { max-height: 500px; overflow-y: auto; padding-right: 10px; }
+        .history-item {
+            background: rgba(255,255,255,0.03);
+            padding: 1rem;
             border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--success);
         }
+        .history-info { text-align: left; }
+        .history-date { font-size: 0.75rem; color: #64748b; }
+        .history-amount { font-weight: 700; color: var(--success); }
 
-        .btn-start {
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            color: white;
-        }
-
-        .btn-stop {
-            background: #ef4444;
-            color: white;
-            display: none;
-        }
-
-        .btn-reset {
-            background: #475569;
-            color: white;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Salary Tracker</h1>
+<div class="main-wrapper">
+    <div class="card">
+        <h2>Tracker</h2>
+        <div class="input-group">
+            <label>Valor da Hora (R$)</label>
+            <input type="number" id="hourly-rate" placeholder="0,00" onchange="saveConfig()">
+        </div>
 
-    <div class="input-group">
-        <label>Valor da sua hora (R$)</label>
-        <input type="number" id="hourly-rate" placeholder="Ex: 50.00" step="0.01">
+        <div class="display-box">
+            <span class="label-small">Tempo de Sessão</span>
+            <span id="time-display" class="val">00:00:00</span>
+        </div>
+
+        <div class="display-box">
+            <span class="label-small">Ganhos Atuais</span>
+            <span id="money-display" class="val" style="color: var(--success)">R$ 0,00</span>
+        </div>
+
+        <div class="btn-grid">
+            <button id="btn-toggle" class="btn-main" onclick="toggleTimer()">Iniciar Trabalho</button>
+            <button id="btn-receive" class="btn-receive" onclick="receivePayment()" style="display: none;">Receber Agora</button>
+            <button class="btn-reset" onclick="resetTimer()">Resetar</button>
+            <button class="btn-clear" style="grid-column: span 2;" onclick="clearAllData()">Apagar Tudo</button>
+        </div>
     </div>
 
-    <div class="display-grid">
-        <div class="stat-card">
-            <div class="stat-label">Tempo Decorrido</div>
-            <div id="time-display" class="stat-value">00:00:00</div>
+    <div class="card">
+        <h2>Histórico de Ganhos</h2>
+        <div class="display-box" style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2);">
+            <span class="label-small" style="color: var(--success)">Total Acumulado (Geral)</span>
+            <span id="total-general" class="val" style="color: var(--success)">R$ 0,00</span>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Ganhos Acumulados</div>
-            <div id="money-display" class="stat-value">R$ 0,00</div>
-        </div>
-    </div>
-
-    <div class="controls">
-        <button id="btn-toggle" class="btn-start" onclick="toggleTimer()">Iniciar</button>
-        <button class="btn-reset" onclick="resetTimer()">Resetar</button>
+        
+        <div class="history-container" id="history-list">
+            </div>
     </div>
 </div>
 
@@ -177,22 +151,31 @@
     let seconds = 0;
     let timerInterval = null;
     let hourlyRate = 0;
+    let history = JSON.parse(localStorage.getItem('salaryHistory')) || [];
+
+    window.onload = () => {
+        const savedRate = localStorage.getItem('hourlyRate');
+        if(savedRate) document.getElementById('hourly-rate').value = savedRate;
+        updateHistoryUI();
+    };
+
+    function saveConfig() {
+        localStorage.setItem('hourlyRate', document.getElementById('hourly-rate').value);
+    }
 
     function updateDisplay() {
-        // Cálculo de Tempo
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
-        
-        const timeString = 
+        document.getElementById('time-display').innerText = 
             `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        document.getElementById('time-display').innerText = timeString;
 
-        // Cálculo de Dinheiro
-        // (Valor hora / 3600) = Valor por segundo
-        const moneyEarned = (hourlyRate / 3600) * seconds;
+        const currentRate = parseFloat(document.getElementById('hourly-rate').value) || 0;
+        const earned = (currentRate / 3600) * seconds;
         document.getElementById('money-display').innerText = 
-            moneyEarned.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            earned.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        document.getElementById('btn-receive').style.display = earned > 0 ? 'block' : 'none';
     }
 
     function toggleTimer() {
@@ -200,25 +183,16 @@
         const rateInput = document.getElementById('hourly-rate');
 
         if (timerInterval) {
-            // Parar
             clearInterval(timerInterval);
             timerInterval = null;
             btn.innerText = "Retomar";
-            btn.style.background = "linear-gradient(to right, #00d2ff, #3a7bd5)";
             rateInput.disabled = false;
         } else {
-            // Iniciar
             hourlyRate = parseFloat(rateInput.value) || 0;
+            if (hourlyRate <= 0) return alert("Defina o valor da hora!");
             
-            if (hourlyRate <= 0) {
-                alert("Por favor, insira um valor de hora válido.");
-                return;
-            }
-
             rateInput.disabled = true;
             btn.innerText = "Pausar";
-            btn.style.background = "#ef4444";
-            
             timerInterval = setInterval(() => {
                 seconds++;
                 updateDisplay();
@@ -226,17 +200,75 @@
         }
     }
 
+    function receivePayment() {
+        const currentRate = parseFloat(document.getElementById('hourly-rate').value) || 0;
+        const earned = (currentRate / 3600) * seconds;
+        
+        if (earned <= 0) return;
+
+        const entry = {
+            id: Date.now(),
+            amount: earned,
+            duration: document.getElementById('time-display').innerText,
+            date: new Date().toLocaleString('pt-BR')
+        };
+
+        history.unshift(entry);
+        localStorage.setItem('salaryHistory', JSON.stringify(history));
+        
+        resetTimer();
+        updateHistoryUI();
+    }
+
+    function updateHistoryUI() {
+        const list = document.getElementById('history-list');
+        const totalDisplay = document.getElementById('total-general');
+        list.innerHTML = '';
+        
+        let total = 0;
+        history.forEach(item => {
+            total += item.amount;
+            list.innerHTML += `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-amount">${item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                        <div class="history-date">${item.date} • ${item.duration}</div>
+                    </div>
+                    <button onclick="deleteEntry(${item.id})" style="background:none; color:#ef4444; font-size:1.2rem; padding:5px;">&times;</button>
+                </div>
+            `;
+        });
+        totalDisplay.innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function deleteEntry(id) {
+        history = history.filter(item => item.id !== id);
+        localStorage.setItem('salaryHistory', JSON.stringify(history));
+        updateHistoryUI();
+    }
+
     function resetTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
         seconds = 0;
-        
-        const btn = document.getElementById('btn-toggle');
-        btn.innerText = "Iniciar";
-        btn.style.background = "linear-gradient(to right, #00d2ff, #3a7bd5)";
-        
+        document.getElementById('btn-toggle').innerText = "Iniciar Trabalho";
         document.getElementById('hourly-rate').disabled = false;
         updateDisplay();
+    }
+
+    // NOVA FUNÇÃO: APAGAR TUDO
+    function clearAllData() {
+        const confirmacao = confirm("⚠️ ATENÇÃO: Isso apagará permanentemente todo o seu histórico de recebimentos e configurações. Deseja continuar?");
+        
+        if (confirmacao) {
+            localStorage.clear();
+            history = [];
+            seconds = 0;
+            document.getElementById('hourly-rate').value = '';
+            resetTimer();
+            updateHistoryUI();
+            alert("Todos os dados foram removidos.");
+        }
     }
 </script>
 
