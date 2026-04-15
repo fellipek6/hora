@@ -202,6 +202,24 @@
     window.onload = () => {
         const savedRate = localStorage.getItem('hourlyRate');
         if(savedRate) document.getElementById('hourly-rate').value = savedRate;
+        
+        // Recuperar tempo decorrido baseado no timestamp do computador
+        const startTime = localStorage.getItem('timerStartTime');
+        const timerRunning = localStorage.getItem('timerRunning') === 'true';
+        
+        if (timerRunning && startTime) {
+            const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
+            seconds = parseInt(localStorage.getItem('timerSeconds') || 0) + elapsed;
+            localStorage.setItem('timerSeconds', seconds);
+            updateDisplay();
+            
+            // Reiniciar o timer automaticamente
+            document.getElementById('btn-toggle').click();
+        } else {
+            seconds = parseInt(localStorage.getItem('timerSeconds') || 0);
+            updateDisplay();
+        }
+        
         updateHistoryUI();
     };
 
@@ -233,14 +251,22 @@
             timerInterval = null;
             btn.innerText = "Retomar Trabalho";
             rateInput.disabled = false;
+            localStorage.setItem('timerRunning', 'false');
+            localStorage.setItem('timerSeconds', seconds);
         } else {
             const currentRate = parseFloat(rateInput.value) || 0;
             if (currentRate <= 0) return alert("Por favor, defina o valor da sua hora primeiro!");
             
             rateInput.disabled = true;
             btn.innerText = "Pausar Sessão";
+            
+            // Salvar o timestamp de início
+            localStorage.setItem('timerStartTime', Date.now().toString());
+            localStorage.setItem('timerRunning', 'true');
+            
             timerInterval = setInterval(() => {
                 seconds++;
+                localStorage.setItem('timerSeconds', seconds);
                 updateDisplay();
             }, 1000);
         }
@@ -299,6 +325,9 @@
         seconds = 0;
         document.getElementById('btn-toggle').innerText = "Iniciar Trabalho";
         document.getElementById('hourly-rate').disabled = false;
+        localStorage.setItem('timerSeconds', '0');
+        localStorage.setItem('timerRunning', 'false');
+        localStorage.removeItem('timerStartTime');
         updateDisplay();
     }
 
