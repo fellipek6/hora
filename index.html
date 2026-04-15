@@ -139,6 +139,7 @@
         }
 
         h2 { font-weight: 400; color: var(--primary); margin-top: 0; margin-bottom: 1rem; font-size: 1.3rem; }
+        h4 { font-weight: 500; color: var(--text); margin-top: 1rem; margin-bottom: 0.5rem; font-size: 1rem; }
 
         .input-group { margin-bottom: 1rem; text-align: left; }
         label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -672,6 +673,16 @@
             <input type="number" id="daily-goal" placeholder="Meta do dia" onchange="saveConfig()">
         </div>
 
+        <div class="input-group">
+            <label>Meta Mensal (R$) - Opcional</label>
+            <input type="number" id="monthly-goal" placeholder="Meta do mês" onchange="saveConfig()">
+        </div>
+
+        <div class="input-group">
+            <label>Meta Total (R$) - Opcional</label>
+            <input type="number" id="total-goal" placeholder="Meta total" onchange="saveConfig()">
+        </div>
+
         <div class="display-box">
             <span class="label-small">Sessão Atual</span>
             <span id="time-display" class="val">00:00:00</span>
@@ -690,6 +701,26 @@
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" id="goal-progress" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div class="monthly-goal-section" id="monthly-goal-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="label-small" style="color: var(--primary)">Progresso Mensal</span>
+                <span id="monthly-goal-percent" style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="monthly-goal-progress" style="width: 0%; background: var(--primary);"></div>
+            </div>
+        </div>
+
+        <div class="total-goal-section" id="total-goal-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="label-small" style="color: var(--warning)">Progresso Total</span>
+                <span id="total-goal-percent" style="font-size: 0.9rem; color: var(--warning); font-weight: 600;">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="total-goal-progress" style="width: 0%; background: var(--warning);"></div>
             </div>
         </div>
 
@@ -818,11 +849,16 @@
 <div id="chart-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>📈 Gráfico de Ganhos</h3>
+            <h3>📈 Gráficos</h3>
             <button class="close-btn" onclick="toggleStats()">✕</button>
         </div>
         <div class="chart-container">
+            <h4>Ganhos ao Longo do Tempo</h4>
             <canvas id="earnings-chart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h4>Progresso das Metas</h4>
+            <canvas id="progress-chart"></canvas>
         </div>
     </div>
 </div>
@@ -837,9 +873,13 @@
     window.onload = () => {
         const savedRate = localStorage.getItem('hourlyRate');
         const savedGoal = localStorage.getItem('dailyGoal');
+        const savedMonthly = localStorage.getItem('monthlyGoal');
+        const savedTotal = localStorage.getItem('totalGoal');
         
         if(savedRate) document.getElementById('hourly-rate').value = savedRate;
         if(savedGoal) document.getElementById('daily-goal').value = savedGoal;
+        if(savedMonthly) document.getElementById('monthly-goal').value = savedMonthly;
+        if(savedTotal) document.getElementById('total-goal').value = savedTotal;
         
         // Recuperar tempo decorrido baseado no timestamp do computador
         const startTime = localStorage.getItem('timerStartTime');
@@ -893,6 +933,8 @@
     function saveConfig() {
         localStorage.setItem('hourlyRate', document.getElementById('hourly-rate').value);
         localStorage.setItem('dailyGoal', document.getElementById('daily-goal').value);
+        localStorage.setItem('monthlyGoal', document.getElementById('monthly-goal').value);
+        localStorage.setItem('totalGoal', document.getElementById('total-goal').value);
         updateDisplay();
     }
 
@@ -920,6 +962,32 @@
             const percent = Math.min((total / dailyGoal) * 100, 100);
             document.getElementById('goal-percent').innerText = Math.round(percent) + '%';
             document.getElementById('goal-progress').style.width = percent + '%';
+        } else {
+            document.getElementById('goal-section').style.display = 'none';
+        }
+
+        const monthlyGoal = parseFloat(document.getElementById('monthly-goal').value) || 0;
+        if (monthlyGoal > 0) {
+            document.getElementById('monthly-goal-section').style.display = 'block';
+            const monthlyEarned = getMonthlyEarnings();
+            const total = monthlyEarned + earned;
+            const percent = Math.min((total / monthlyGoal) * 100, 100);
+            document.getElementById('monthly-goal-percent').innerText = Math.round(percent) + '%';
+            document.getElementById('monthly-goal-progress').style.width = percent + '%';
+        } else {
+            document.getElementById('monthly-goal-section').style.display = 'none';
+        }
+
+        const totalGoal = parseFloat(document.getElementById('total-goal').value) || 0;
+        if (totalGoal > 0) {
+            document.getElementById('total-goal-section').style.display = 'block';
+            const totalEarned = getTotalEarnings();
+            const total = totalEarned + earned;
+            const percent = Math.min((total / totalGoal) * 100, 100);
+            document.getElementById('total-goal-percent').innerText = Math.round(percent) + '%';
+            document.getElementById('total-goal-progress').style.width = percent + '%';
+        } else {
+            document.getElementById('total-goal-section').style.display = 'none';
         }
     }
 
@@ -1192,6 +1260,20 @@
                       .reduce((sum, item) => sum + item.amount, 0);
     }
 
+    function getMonthlyEarnings() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        return history.filter(item => {
+            const itemDate = new Date(item.timestamp);
+            return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+        }).reduce((sum, item) => sum + item.amount, 0);
+    }
+
+    function getTotalEarnings() {
+        return history.reduce((sum, item) => sum + item.amount, 0);
+    }
+
     function updateStatistics() {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1234,7 +1316,10 @@
         modal.classList.toggle('show');
         
         if (modal.classList.contains('show')) {
-            setTimeout(() => renderChart(), 300);
+            setTimeout(() => {
+                renderChart();
+                renderProgressChart();
+            }, 300);
         }
     }
 
@@ -1312,6 +1397,68 @@
         }
     }
 
+    function renderProgressChart() {
+        const ctx = document.getElementById('progress-chart');
+        if (!ctx) {
+            console.error('Canvas de progresso não encontrado');
+            return;
+        }
+
+        try {
+            const currentRate = parseFloat(document.getElementById('hourly-rate').value) || 0;
+            const earned = (currentRate / 3600) * seconds;
+
+            const dailyGoal = parseFloat(document.getElementById('daily-goal').value) || 0;
+            const monthlyGoal = parseFloat(document.getElementById('monthly-goal').value) || 0;
+            const totalGoal = parseFloat(document.getElementById('total-goal').value) || 0;
+
+            const todayEarned = getTodayEarnings() + earned;
+            const monthlyEarned = getMonthlyEarnings() + earned;
+            const totalEarned = getTotalEarnings() + earned;
+
+            const dailyProgress = dailyGoal > 0 ? Math.min((todayEarned / dailyGoal) * 100, 100) : 0;
+            const monthlyProgress = monthlyGoal > 0 ? Math.min((monthlyEarned / monthlyGoal) * 100, 100) : 0;
+            const totalProgress = totalGoal > 0 ? Math.min((totalEarned / totalGoal) * 100, 100) : 0;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Diária', 'Mensal', 'Total'],
+                    datasets: [{
+                        label: 'Progresso (%)',
+                        data: [dailyProgress, monthlyProgress, totalProgress],
+                        backgroundColor: ['rgba(76, 175, 128, 0.8)', 'rgba(0, 210, 255, 0.8)', 'rgba(245, 158, 11, 0.8)'],
+                        borderColor: ['rgba(76, 175, 128, 1)', 'rgba(0, 210, 255, 1)', 'rgba(245, 158, 11, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f8fafc', font: { size: 12 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao criar gráfico de progresso:', error);
+        }
+    }
+
     function deleteEntry(id) {
         if (confirm('Tem certeza que deseja apagar este registro?')) {
             history = history.filter(item => item.id !== id);
@@ -1341,6 +1488,8 @@
             seconds = 0;
             document.getElementById('hourly-rate').value = '';
             document.getElementById('daily-goal').value = '';
+            document.getElementById('monthly-goal').value = '';
+            document.getElementById('total-goal').value = '';
             resetTimer();
             updateHistoryUI();
             updateStatistics();
