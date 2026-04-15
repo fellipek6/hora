@@ -1144,7 +1144,18 @@
             return;
         }
         
-        seconds += totalSeconds;
+        if (timerInterval) {
+            // Timer está rodando, ajustar baseSeconds
+            let base = parseInt(localStorage.getItem('timerBaseSeconds') || 0);
+            base += totalSeconds;
+            localStorage.setItem('timerBaseSeconds', base.toString());
+            // Recalcular seconds
+            const start = parseInt(localStorage.getItem('timerStartTime') || 0);
+            seconds = base + Math.floor((Date.now() - start) / 1000);
+        } else {
+            seconds += totalSeconds;
+        }
+        
         localStorage.setItem('timerSeconds', seconds);
         updateDisplay();
         closeAdjustModal();
@@ -1162,12 +1173,26 @@
             return;
         }
         
-        if (seconds - totalSeconds < 0) {
-            alert('Não pode remover mais tempo do que o registrado!');
-            return;
+        if (timerInterval) {
+            // Timer está rodando, ajustar baseSeconds
+            let base = parseInt(localStorage.getItem('timerBaseSeconds') || 0);
+            if (base - totalSeconds < 0) {
+                alert('Não pode remover mais tempo do que o registrado!');
+                return;
+            }
+            base -= totalSeconds;
+            localStorage.setItem('timerBaseSeconds', base.toString());
+            // Recalcular seconds
+            const start = parseInt(localStorage.getItem('timerStartTime') || 0);
+            seconds = base + Math.floor((Date.now() - start) / 1000);
+        } else {
+            if (seconds - totalSeconds < 0) {
+                alert('Não pode remover mais tempo do que o registrado!');
+                return;
+            }
+            seconds -= totalSeconds;
         }
         
-        seconds -= totalSeconds;
         localStorage.setItem('timerSeconds', seconds);
         updateDisplay();
         closeAdjustModal();
