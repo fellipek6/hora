@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salary Tracker Pro | Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #00d2ff;
             --secondary: #3a7bd5;
             --success: #4ade80;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --bg: #0f172a;
             --card-bg: rgba(255, 255, 255, 0.05);
             --text: #f8fafc;
@@ -20,55 +23,141 @@
             background: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 12px;
             display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header-container {
+            width: 100%;
+            max-width: 1400px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            display: flex;
+            align-items: center;
             justify-content: center;
+            gap: 1rem;
+            letter-spacing: -0.5px;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .header-title:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 8px 16px rgba(0, 210, 255, 0.3));
+        }
+
+        .header-icon {
+            font-size: 2.5rem;
+            color: var(--warning);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .header-title:hover .header-icon {
+            animation: none;
+            transform: scale(1.1) rotate(15deg);
+        }
+
+        .header-subtitle {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
         }
 
         .main-wrapper {
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 2rem;
-            max-width: 1100px;
+            grid-template-columns: 1fr 1fr 1.2fr;
+            gap: 1.2rem;
+            max-width: 1400px;
             width: 100%;
-            margin-top: 2rem;
+            padding: 0 20px;
+            height: fit-content;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1600px) {
+            .main-wrapper { gap: 1rem; padding: 0 15px; }
+        }
+
+        @media (max-width: 1400px) {
+            .main-wrapper { grid-template-columns: 1fr 1fr; padding: 0 12px; }
+            .header-title { font-size: 2rem; gap: 0.8rem; }
+            .header-container { padding: 0 12px; }
         }
 
         @media (max-width: 900px) {
-            .main-wrapper { grid-template-columns: 1fr; }
+            .main-wrapper { grid-template-columns: 1fr; padding: 0 8px; }
+            .header-title { font-size: 1.8rem; }
+            body { padding: 8px; }
+            .header-container { padding: 0 8px; }
+        }
+
+        @media (max-width: 480px) {
+            .main-wrapper { gap: 0.8rem; padding: 0; }
+            body { padding: 6px; }
+            .header-title { font-size: 1.4rem; }
+            .header-icon { font-size: 2rem; }
+            .header-container { padding: 0; margin-bottom: 1rem; }
         }
 
         .card {
             background: var(--card-bg);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 2rem;
-            border-radius: 24px;
+            padding: 1.5rem;
+            border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
         }
 
-        h2 { font-weight: 400; color: var(--primary); margin-top: 0; margin-bottom: 1.5rem; }
+        @media (max-width: 900px) {
+            .card { max-height: none; }
+        }
 
-        .input-group { margin-bottom: 1.5rem; text-align: left; }
-        label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        h2 { font-weight: 400; color: var(--primary); margin-top: 0; margin-bottom: 1rem; font-size: 1.3rem; }
+
+        .input-group { margin-bottom: 1rem; text-align: left; }
+        label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
         input {
-            width: 100%; padding: 12px; background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-            color: white; font-size: 1.1rem; box-sizing: border-box; outline: none;
+            width: 100%; padding: 10px; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            color: white; font-size: 1rem; box-sizing: border-box; outline: none;
         }
         input:focus { border-color: var(--primary); }
 
         .display-box {
             background: rgba(0,0,0,0.2);
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.8rem;
             text-align: center;
         }
-        .val { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; display: block; }
-        .label-small { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
+        .val { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 700; display: block; }
+        .label-small { font-size: 0.65rem; color: #64748b; text-transform: uppercase; }
 
         .btn-grid { 
             display: grid; 
@@ -81,8 +170,8 @@
             cursor: pointer; transition: 0.3s; text-transform: uppercase;
             font-size: 0.75rem;
         }
-        .btn-main { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; grid-column: span 3; font-size: 0.9rem; }
-        .btn-receive { background: var(--success); color: #064e3b; grid-column: span 3; font-size: 0.9rem; margin-bottom: 10px; }
+        .btn-main { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; grid-column: span 3; font-size: 0.9rem; padding: 16px; margin-bottom: 12px; }
+        .btn-receive { background: var(--success); color: #064e3b; grid-column: span 3; font-size: 0.9rem; padding: 16px; margin-bottom: 12px; }
         .btn-reset { background: #334155; color: white; }
         .btn-clear { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
         
@@ -91,11 +180,15 @@
 
         /* ESTILO DO HISTÓRICO E SCROLLBAR */
         .history-container { 
-            max-height: 380px; /* Altura ideal para mostrar cerca de 4 itens antes do scroll */
+            max-height: calc(100vh - 250px);
             overflow-y: auto; 
-            padding-right: 12px;
-            scrollbar-width: thin; /* Firefox */
-            scrollbar-color: var(--secondary) transparent; /* Firefox */
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--secondary) transparent;
+        }
+
+        @media (max-width: 900px) {
+            .history-container { max-height: 400px; }
         }
 
         /* Scrollbar Estilizada para Chrome, Safari e Edge */
@@ -120,9 +213,9 @@
 
         .history-item {
             background: rgba(255,255,255,0.03);
-            padding: 1.2rem;
-            border-radius: 16px;
-            margin-bottom: 12px;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -136,41 +229,360 @@
         }
 
         .history-info { text-align: left; }
-        .history-date { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
-        .history-amount { font-weight: 700; color: var(--success); font-size: 1.1rem; }
+        .history-date { font-size: 0.7rem; color: #64748b; margin-top: 3px; }
+        .history-amount { font-weight: 700; color: var(--success); font-size: 1rem; }
 
         .btn-del {
             background: rgba(239, 68, 68, 0.1);
             color: var(--danger);
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-box {
+            background: rgba(0, 210, 255, 0.05);
+            border: 1px solid rgba(0, 210, 255, 0.1);
+            padding: 0.8rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.3rem; }
+        .stat-value { font-size: 1.2rem; font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', monospace; }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin-bottom: 0.8rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.68rem;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .btn-export { background: rgba(0, 210, 255, 0.15); color: var(--primary); border: 1px solid var(--primary); }
+        .btn-export:hover { background: var(--primary); color: #0f172a; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show { display: flex; }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 450px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover { color: var(--text); }
+
+        .note-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            font-size: 1.2rem;
+            color: white;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            resize: vertical;
+            min-height: 80px;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 1rem;
+        }
+
+        .note-input:focus { border-color: var(--primary); outline: none; }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--success), var(--primary));
+            transition: width 0.3s ease;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        .badge-primary { background: rgba(0, 210, 255, 0.2); color: var(--primary); }
+        .badge-success { background: rgba(74, 222, 128, 0.2); color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+        .keyboard-hint {
+            font-size: 0.6rem;
+            color: #64748b;
+            margin-top: 0.3rem;
+            text-align: center;
+        }
+
+        .daily-goal-section {
+            background: rgba(74, 222, 128, 0.05);
+            border: 1px solid rgba(74, 222, 128, 0.1);
+            padding: 0.8rem;
+            border-radius: 10px;
+            margin-bottom: 0.8rem;
+        }
+
+        .history-item-note {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        .btn-adjust {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--warning), #f97316);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+            transition: all 0.3s ease;
+            z-index: 500;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .btn-adjust:hover {
+            animation: none;
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(245, 158, 11, 0.5);
+        }
+
+        .btn-adjust:active {
+            transform: scale(0.95);
+        }
+
+        .hours-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+
+        .hours-input-group label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            flex: 1;
+        }
+
+        .hours-input-group input {
+            width: 80px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .hours-input-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .btn-adjust-action {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            width: 100%;
+        }
+
+        .btn-add-hours {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .btn-add-hours:hover {
+            background: var(--success);
+            color: #064e3b;
+        }
+
+        .btn-remove-hours {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-remove-hours:hover {
+            background: var(--danger);
+            color: white;
         }
     </style>
 </head>
 <body>
 
+<div class="header-container">
+    <h1 class="header-title">
+        <i class="fas fa-coins header-icon"></i>
+        Salary Tracker Pro
+    </h1>
+    <div class="header-subtitle">Controle seus ganhos em tempo real</div>
+</div>
+
 <div class="main-wrapper">
     <div class="card">
-        <h2>Painel de Controle</h2>
+        <h2>⏱️ Painel de Controle</h2>
         <div class="input-group">
             <label>Sua Hora (R$)</label>
             <input type="number" id="hourly-rate" placeholder="Digite o valor da hora" onchange="saveConfig()">
         </div>
 
+        <div class="input-group">
+            <label>Meta Diária (R$) - Opcional</label>
+            <input type="number" id="daily-goal" placeholder="Meta do dia" onchange="saveConfig()">
+        </div>
+
         <div class="display-box">
             <span class="label-small">Sessão Atual</span>
             <span id="time-display" class="val">00:00:00</span>
+            <div class="keyboard-hint">Pressione ESPAÇO para iniciar/pausar</div>
         </div>
 
         <div class="display-box">
             <span class="label-small">Ganhos em Tempo Real</span>
             <span id="money-display" class="val" style="color: var(--success)">R$ 0,00</span>
+        </div>
+
+        <div class="daily-goal-section" id="goal-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="label-small" style="color: var(--success)">Progresso da Meta</span>
+                <span id="goal-percent" style="font-size: 0.9rem; color: var(--success); font-weight: 600;">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="goal-progress" style="width: 0%;"></div>
+            </div>
         </div>
 
         <button id="btn-toggle" class="btn-main" onclick="toggleTimer()">Iniciar Trabalho</button>
@@ -183,14 +595,85 @@
     </div>
 
     <div class="card">
-        <h2>Histórico de Ganhos</h2>
+        <h2>📊 Estatísticas</h2>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Total Hoje</div>
+                <div class="stat-value" id="today-total">R$ 0,00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Esta Semana</div>
+                <div class="stat-value" id="week-total">R$ 0,00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Este Mês</div>
+                <div class="stat-value" id="month-total">R$ 0,00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Dias Trabalhados</div>
+                <div class="stat-value" id="days-worked">0</div>
+            </div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px;">
+            <div class="stat-label" style="text-align: center; margin-bottom: 0.5rem;">Média de Ganho/Dia</div>
+            <div class="stat-value" style="color: var(--warning); font-size: 1.6rem;" id="avg-per-day">R$ 0,00</div>
+            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: #64748b;">Baseado em dias com trabalho</div>
+        </div>
+
+        <div class="action-buttons" style="margin-top: 1.5rem;">
+            <button class="btn-small btn-export" onclick="toggleStats()">📈 Ver Gráfico</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Histórico de Ganhos</h2>
         <div class="display-box" style="background: rgba(74, 222, 128, 0.05); border: 1px solid rgba(74, 222, 128, 0.1);">
             <span class="label-small" style="color: var(--success)">Total Acumulado Geral</span>
             <span id="total-general" class="val" style="color: var(--success)">R$ 0,00</span>
         </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="filterHistory('all')">Todos</button>
+            <button class="tab-btn" onclick="filterHistory('today')">Hoje</button>
+            <button class="tab-btn" onclick="filterHistory('week')">Semana</button>
+            <button class="tab-btn" onclick="filterHistory('month')">Mês</button>
+        </div>
         
-        <div class="history-container" id="history-list">
-            </div>
+        <div class="history-container" id="history-list"></div>
+    </div>
+</div>
+
+<button class="btn-adjust" onclick="openAdjustModal()" title="Ajustar horas manualmente">⏱️</button>
+
+<div id="adjust-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>⏱️ Ajustar Horas</h3>
+            <button class="close-btn" onclick="closeAdjustModal()">✕</button>
+        </div>
+        <div class="hours-input-group">
+            <label>Horas</label>
+            <input type="number" id="adjust-hours" value="0" min="0" max="23">
+            <label>Min</label>
+            <input type="number" id="adjust-minutes" value="0" min="0" max="59">
+            <label>Seg</label>
+            <input type="number" id="adjust-seconds" value="0" min="0" max="59">
+        </div>
+        <button class="btn-adjust-action btn-add-hours" onclick="addHours()">➕ Adicionar Tempo</button>
+        <button class="btn-adjust-action btn-remove-hours" onclick="removeHours()">➖ Remover Tempo</button>
+    </div>
+</div>
+
+<div id="chart-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📈 Gráfico de Ganhos</h3>
+            <button class="close-btn" onclick="toggleStats()">✕</button>
+        </div>
+        <div class="chart-container">
+            <canvas id="earnings-chart"></canvas>
+        </div>
     </div>
 </div>
 
@@ -198,10 +681,15 @@
     let seconds = 0;
     let timerInterval = null;
     let history = JSON.parse(localStorage.getItem('salaryHistory')) || [];
+    let currentFilter = 'all';
+    let chart = null;
 
     window.onload = () => {
         const savedRate = localStorage.getItem('hourlyRate');
+        const savedGoal = localStorage.getItem('dailyGoal');
+        
         if(savedRate) document.getElementById('hourly-rate').value = savedRate;
+        if(savedGoal) document.getElementById('daily-goal').value = savedGoal;
         
         // Recuperar tempo decorrido baseado no timestamp do computador
         const startTime = localStorage.getItem('timerStartTime');
@@ -212,8 +700,6 @@
             seconds = parseInt(localStorage.getItem('timerSeconds') || 0) + elapsed;
             localStorage.setItem('timerSeconds', seconds);
             updateDisplay();
-            
-            // Reiniciar o timer automaticamente
             document.getElementById('btn-toggle').click();
         } else {
             seconds = parseInt(localStorage.getItem('timerSeconds') || 0);
@@ -221,10 +707,21 @@
         }
         
         updateHistoryUI();
+        updateStatistics();
+        
+        // Atalho de teclado: ESPAÇO para iniciar/pausar
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleTimer();
+            }
+        });
     };
 
     function saveConfig() {
         localStorage.setItem('hourlyRate', document.getElementById('hourly-rate').value);
+        localStorage.setItem('dailyGoal', document.getElementById('daily-goal').value);
+        updateDisplay();
     }
 
     function updateDisplay() {
@@ -239,7 +736,19 @@
         document.getElementById('money-display').innerText = 
             earned.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         
+        // Mostrar botão de recebimento
         document.getElementById('btn-receive').style.display = earned > 0 ? 'block' : 'none';
+        
+        // Atualizar progresso da meta
+        const dailyGoal = parseFloat(document.getElementById('daily-goal').value) || 0;
+        if (dailyGoal > 0) {
+            document.getElementById('goal-section').style.display = 'block';
+            const todayEarned = getTodayEarnings();
+            const total = todayEarned + earned;
+            const percent = Math.min((total / dailyGoal) * 100, 100);
+            document.getElementById('goal-percent').innerText = Math.round(percent) + '%';
+            document.getElementById('goal-progress').style.width = percent + '%';
+        }
     }
 
     function toggleTimer() {
@@ -260,7 +769,6 @@
             rateInput.disabled = true;
             btn.innerText = "Pausar Sessão";
             
-            // Salvar o timestamp de início
             localStorage.setItem('timerStartTime', Date.now().toString());
             localStorage.setItem('timerRunning', 'true');
             
@@ -272,6 +780,59 @@
         }
     }
 
+    function openAdjustModal() {
+        document.getElementById('adjust-modal').classList.add('show');
+        document.getElementById('adjust-hours').value = '0';
+        document.getElementById('adjust-minutes').value = '0';
+        document.getElementById('adjust-seconds').value = '0';
+    }
+
+    function closeAdjustModal() {
+        document.getElementById('adjust-modal').classList.remove('show');
+    }
+
+    function addHours() {
+        const hrs = parseInt(document.getElementById('adjust-hours').value) || 0;
+        const mins = parseInt(document.getElementById('adjust-minutes').value) || 0;
+        const secs = parseInt(document.getElementById('adjust-seconds').value) || 0;
+        
+        const totalSeconds = (hrs * 3600) + (mins * 60) + secs;
+        
+        if (totalSeconds === 0) {
+            alert('Por favor, insira um valor válido!');
+            return;
+        }
+        
+        seconds += totalSeconds;
+        localStorage.setItem('timerSeconds', seconds);
+        updateDisplay();
+        closeAdjustModal();
+    }
+
+    function removeHours() {
+        const hrs = parseInt(document.getElementById('adjust-hours').value) || 0;
+        const mins = parseInt(document.getElementById('adjust-minutes').value) || 0;
+        const secs = parseInt(document.getElementById('adjust-seconds').value) || 0;
+        
+        const totalSeconds = (hrs * 3600) + (mins * 60) + secs;
+        
+        if (totalSeconds === 0) {
+            alert('Por favor, insira um valor válido!');
+            return;
+        }
+        
+        if (seconds - totalSeconds < 0) {
+            alert('Não pode remover mais tempo do que o registrado!');
+            return;
+        }
+        
+        seconds -= totalSeconds;
+        localStorage.setItem('timerSeconds', seconds);
+        updateDisplay();
+        closeAdjustModal();
+    }
+
+
     function receivePayment() {
         const currentRate = parseFloat(document.getElementById('hourly-rate').value) || 0;
         const earned = (currentRate / 3600) * seconds;
@@ -282,6 +843,7 @@
             id: Date.now(),
             amount: earned,
             duration: document.getElementById('time-display').innerText,
+            timestamp: new Date().getTime(),
             date: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
         };
 
@@ -290,6 +852,7 @@
         
         resetTimer();
         updateHistoryUI();
+        updateStatistics();
     }
 
     function updateHistoryUI() {
@@ -298,25 +861,180 @@
         list.innerHTML = '';
         
         let total = 0;
-        history.forEach(item => {
+        let filteredHistory = filterHistoryByDate(history, currentFilter);
+
+        filteredHistory.forEach(item => {
             total += item.amount;
             list.innerHTML += `
                 <div class="history-item">
-                    <div class="history-info">
+                    <div class="history-info" style="flex: 1;">
                         <div class="history-amount">${item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
                         <div class="history-date">${item.date} • ${item.duration}</div>
                     </div>
-                    <button class="btn-del" onclick="deleteEntry(${item.id})">&times;</button>
+                    <button class="btn-del" onclick="deleteEntry(${item.id})" title="Apagar">&times;</button>
                 </div>
             `;
         });
+        
         totalDisplay.innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    function deleteEntry(id) {
-        history = history.filter(item => item.id !== id);
-        localStorage.setItem('salaryHistory', JSON.stringify(history));
+    function filterHistoryByDate(data, filter) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        return data.filter(item => {
+            const itemDate = new Date(item.timestamp);
+            const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+            
+            switch(filter) {
+                case 'today':
+                    return itemDay.getTime() === today.getTime();
+                case 'week':
+                    const weekAgo = new Date(today);
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    return itemDay >= weekAgo;
+                case 'month':
+                    return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+                default:
+                    return true;
+            }
+        });
+    }
+
+    function filterHistory(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
         updateHistoryUI();
+    }
+
+    function getTodayEarnings() {
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        return history.filter(item => new Date(item.timestamp) >= todayStart)
+                      .reduce((sum, item) => sum + item.amount, 0);
+    }
+
+    function updateStatistics() {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        
+        // Total de hoje
+        const todayTotal = getTodayEarnings();
+        document.getElementById('today-total').innerText = todayTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        // Total da semana
+        const weekTotal = history.filter(item => new Date(item.timestamp) >= weekAgo)
+                                 .reduce((sum, item) => sum + item.amount, 0);
+        document.getElementById('week-total').innerText = weekTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        // Total do mês
+        const monthTotal = history.filter(item => {
+            const itemDate = new Date(item.timestamp);
+            return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+        }).reduce((sum, item) => sum + item.amount, 0);
+        document.getElementById('month-total').innerText = monthTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        // Dias trabalhados
+        const uniqueDays = new Set();
+        history.forEach(item => {
+            const itemDate = new Date(item.timestamp);
+            const dayKey = itemDate.toLocaleDateString('pt-BR');
+            uniqueDays.add(dayKey);
+        });
+        document.getElementById('days-worked').innerText = uniqueDays.size;
+        
+        // Média por dia
+        const totalEarned = history.reduce((sum, item) => sum + item.amount, 0);
+        const avgPerDay = uniqueDays.size > 0 ? totalEarned / uniqueDays.size : 0;
+        document.getElementById('avg-per-day').innerText = avgPerDay.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function toggleStats() {
+        const modal = document.getElementById('chart-modal');
+        modal.classList.toggle('show');
+        
+        if (modal.classList.contains('show')) {
+            setTimeout(() => renderChart(), 100);
+        }
+    }
+
+    function renderChart() {
+        const ctx = document.getElementById('earnings-chart');
+        if (!ctx) return;
+
+        // Preparar dados dos últimos 7 dias
+        const days = [];
+        const amounts = [];
+        const now = new Date();
+        
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(date.getDate() - i);
+            const dayKey = date.toLocaleDateString('pt-BR', { weekday: 'short', month: 'numeric', day: 'numeric' });
+            days.push(dayKey);
+            
+            const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const dayEnd = new Date(dayStart);
+            dayEnd.setDate(dayEnd.getDate() + 1);
+            
+            const dayTotal = history.filter(item => {
+                const itemDate = new Date(item.timestamp);
+                return itemDate >= dayStart && itemDate < dayEnd;
+            }).reduce((sum, item) => sum + item.amount, 0);
+            
+            amounts.push(dayTotal);
+        }
+
+        if (chart) {
+            chart.destroy();
+        }
+
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: days,
+                datasets: [{
+                    label: 'Ganhos (R$)',
+                    data: amounts,
+                    backgroundColor: 'rgba(0, 210, 255, 0.6)',
+                    borderColor: 'rgba(0, 210, 255, 1)',
+                    borderRadius: 8,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#f8fafc', font: { size: 12 } }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    },
+                    x: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                }
+            }
+        });
+    }
+
+    function deleteEntry(id) {
+        if (confirm('Tem certeza que deseja apagar este registro?')) {
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem('salaryHistory', JSON.stringify(history));
+            updateHistoryUI();
+            updateStatistics();
+        }
     }
 
     function resetTimer() {
@@ -332,15 +1050,26 @@
     }
 
     function clearAllData() {
-        if (confirm("⚠️ Deseja apagar todo o histórico e configurações? Esta ação não pode ser desfeita.")) {
+        if (confirm("⚠️ Deseja apagar TODO o histórico e configurações? Esta ação não pode ser desfeita.")) {
             localStorage.clear();
             history = [];
             seconds = 0;
             document.getElementById('hourly-rate').value = '';
+            document.getElementById('daily-goal').value = '';
             resetTimer();
             updateHistoryUI();
+            updateStatistics();
         }
     }
+
+    // Fechar modais ao clicar fora
+    document.addEventListener('click', (e) => {
+        const chartModal = document.getElementById('chart-modal');
+        const adjustModal = document.getElementById('adjust-modal');
+        
+        if (e.target === chartModal) chartModal.classList.remove('show');
+        if (e.target === adjustModal) adjustModal.classList.remove('show');
+    });
 </script>
 
 </body>
