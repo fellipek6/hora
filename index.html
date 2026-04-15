@@ -293,7 +293,8 @@
 
         .chart-container {
             position: relative;
-            height: 200px;
+            width: 100%;
+            height: 300px;
             margin-bottom: 0.8rem;
         }
 
@@ -539,6 +540,113 @@
             background: var(--danger);
             color: white;
         }
+
+        .edit-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .edit-input-group label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .edit-input-group input {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .edit-input-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .edit-time-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .edit-time-row > div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .edit-time-row label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .edit-time-row input {
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .btn-save-edit {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+
+        .btn-save-edit:hover {
+            background: var(--success);
+            color: #064e3b;
+        }
+
+        .btn-cancel-edit {
+            background: rgba(107, 114, 128, 0.2);
+            color: #cbd5e1;
+            border: 1px solid #cbd5e1;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            width: 100%;
+        }
+
+        .btn-cancel-edit:hover {
+            background: #6b7280;
+            color: white;
+        }
+
+        .history-item {
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -665,6 +773,48 @@
     </div>
 </div>
 
+<div id="edit-item-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>✏️ Editar Registro</h3>
+            <button class="close-btn" onclick="closeEditModal()">✕</button>
+        </div>
+        
+        <div class="edit-time-row">
+            <div>
+                <label>Horas</label>
+                <input type="number" id="edit-hours" min="0" max="23">
+            </div>
+            <div>
+                <label>Minutos</label>
+                <input type="number" id="edit-minutes" min="0" max="59">
+            </div>
+            <div>
+                <label>Segundos</label>
+                <input type="number" id="edit-seconds" min="0" max="59">
+            </div>
+        </div>
+
+        <div class="edit-input-group">
+            <label>Valor da Hora (R$)</label>
+            <input type="number" id="edit-hourly-rate" min="0" step="0.01">
+        </div>
+
+        <div class="edit-input-group">
+            <label>Data e Hora</label>
+            <input type="datetime-local" id="edit-datetime">
+        </div>
+
+        <div class="edit-input-group">
+            <label>Valor Total (R$)</label>
+            <input type="number" id="edit-total-amount" readonly style="background: rgba(0,0,0,0.5);">
+        </div>
+
+        <button class="btn-save-edit" onclick="saveEditedItem()">💾 Salvar Alterações</button>
+        <button class="btn-cancel-edit" onclick="closeEditModal()">Cancelar</button>
+    </div>
+</div>
+
 <div id="chart-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -749,6 +899,102 @@
             document.getElementById('goal-percent').innerText = Math.round(percent) + '%';
             document.getElementById('goal-progress').style.width = percent + '%';
         }
+    }
+
+    let editingItemId = null;
+
+    function openEditModal(itemId) {
+        const item = history.find(h => h.id === itemId);
+        if (!item) return;
+
+        editingItemId = itemId;
+
+        // Extrair horas, minutos e segundos da duração (HH:MM:SS)
+        const timeParts = item.duration.split(':');
+        const hrs = parseInt(timeParts[0]);
+        const mins = parseInt(timeParts[1]);
+        const secs = parseInt(timeParts[2]);
+
+        document.getElementById('edit-hours').value = hrs;
+        document.getElementById('edit-minutes').value = mins;
+        document.getElementById('edit-seconds').value = secs;
+
+        // Calcular taxa horária a partir do valor total e tempo
+        const totalSeconds = (hrs * 3600) + (mins * 60) + secs;
+        const rate = totalSeconds > 0 ? item.amount / (totalSeconds / 3600) : 0;
+        document.getElementById('edit-hourly-rate').value = rate.toFixed(2);
+
+        // Converter data para datetime-local
+        const dateObj = new Date(item.timestamp);
+        const isoString = dateObj.toISOString().slice(0, 16);
+        document.getElementById('edit-datetime').value = isoString;
+
+        // Mostrar valor total
+        document.getElementById('edit-total-amount').value = item.amount.toFixed(2);
+
+        // Adicionar event listener para recalcular ao mudar valores
+        document.getElementById('edit-hours').addEventListener('change', recalculateEditTotal);
+        document.getElementById('edit-minutes').addEventListener('change', recalculateEditTotal);
+        document.getElementById('edit-seconds').addEventListener('change', recalculateEditTotal);
+        document.getElementById('edit-hourly-rate').addEventListener('change', recalculateEditTotal);
+
+        document.getElementById('edit-item-modal').classList.add('show');
+    }
+
+    function recalculateEditTotal() {
+        const hrs = parseInt(document.getElementById('edit-hours').value) || 0;
+        const mins = parseInt(document.getElementById('edit-minutes').value) || 0;
+        const secs = parseInt(document.getElementById('edit-seconds').value) || 0;
+        const rate = parseFloat(document.getElementById('edit-hourly-rate').value) || 0;
+
+        const totalSeconds = (hrs * 3600) + (mins * 60) + secs;
+        const total = (rate / 3600) * totalSeconds;
+
+        document.getElementById('edit-total-amount').value = total.toFixed(2);
+    }
+
+    function closeEditModal() {
+        document.getElementById('edit-item-modal').classList.remove('show');
+        editingItemId = null;
+    }
+
+    function saveEditedItem() {
+        if (!editingItemId) return;
+
+        const item = history.find(h => h.id === editingItemId);
+        if (!item) return;
+
+        const hrs = parseInt(document.getElementById('edit-hours').value) || 0;
+        const mins = parseInt(document.getElementById('edit-minutes').value) || 0;
+        const secs = parseInt(document.getElementById('edit-seconds').value) || 0;
+        const rate = parseFloat(document.getElementById('edit-hourly-rate').value) || 0;
+        const dateTimeStr = document.getElementById('edit-datetime').value;
+
+        // Validações
+        if (rate <= 0) {
+            alert('A taxa horária deve ser maior que zero!');
+            return;
+        }
+
+        const totalSeconds = (hrs * 3600) + (mins * 60) + secs;
+        if (totalSeconds <= 0) {
+            alert('O tempo deve ser maior que zero!');
+            return;
+        }
+
+        // Atualizar item
+        item.duration = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        item.amount = (rate / 3600) * totalSeconds;
+        item.timestamp = new Date(dateTimeStr).getTime();
+        item.date = new Date(dateTimeStr).toLocaleDateString('pt-BR') + ' às ' + new Date(dateTimeStr).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+        // Salvar no localStorage
+        localStorage.setItem('salaryHistory', JSON.stringify(history));
+
+        // Atualizar UI
+        updateHistoryUI();
+        updateStatistics();
+        closeEditModal();
     }
 
     function toggleTimer() {
@@ -866,7 +1112,7 @@
         filteredHistory.forEach(item => {
             total += item.amount;
             list.innerHTML += `
-                <div class="history-item">
+                <div class="history-item" onclick="openEditModal(${item.id})">
                     <div class="history-info" style="flex: 1;">
                         <div class="history-amount">${item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
                         <div class="history-date">${item.date} • ${item.duration}</div>
@@ -883,7 +1129,7 @@
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         
-        return data.filter(item => {
+        const filtered = data.filter(item => {
             const itemDate = new Date(item.timestamp);
             const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
             
@@ -900,6 +1146,9 @@
                     return true;
             }
         });
+
+        // Ordenar por data decrescente (mais recente primeiro)
+        return filtered.sort((a, b) => b.timestamp - a.timestamp);
     }
 
     function filterHistory(filter) {
@@ -958,13 +1207,16 @@
         modal.classList.toggle('show');
         
         if (modal.classList.contains('show')) {
-            setTimeout(() => renderChart(), 100);
+            setTimeout(() => renderChart(), 300);
         }
     }
 
     function renderChart() {
         const ctx = document.getElementById('earnings-chart');
-        if (!ctx) return;
+        if (!ctx) {
+            console.error('Canvas não encontrado');
+            return;
+        }
 
         // Preparar dados dos últimos 7 dias
         const days = [];
@@ -993,39 +1245,44 @@
             chart.destroy();
         }
 
-        chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: days,
-                datasets: [{
-                    label: 'Ganhos (R$)',
-                    data: amounts,
-                    backgroundColor: 'rgba(0, 210, 255, 0.6)',
-                    borderColor: 'rgba(0, 210, 255, 1)',
-                    borderRadius: 8,
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: '#f8fafc', font: { size: 12 } }
-                    }
+        try {
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'Ganhos (R$)',
+                        data: amounts,
+                        backgroundColor: 'rgba(0, 210, 255, 0.6)',
+                        borderColor: 'rgba(0, 210, 255, 1)',
+                        borderRadius: 8,
+                        borderWidth: 2
+                    }]
                 },
-                scales: {
-                    y: {
-                        ticks: { color: '#94a3b8' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f8fafc', font: { size: 12 } }
+                        }
                     },
-                    x: {
-                        ticks: { color: '#94a3b8' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Erro ao criar gráfico:', error);
+        }
     }
 
     function deleteEntry(id) {
@@ -1066,9 +1323,11 @@
     document.addEventListener('click', (e) => {
         const chartModal = document.getElementById('chart-modal');
         const adjustModal = document.getElementById('adjust-modal');
+        const editModal = document.getElementById('edit-item-modal');
         
         if (e.target === chartModal) chartModal.classList.remove('show');
         if (e.target === adjustModal) adjustModal.classList.remove('show');
+        if (e.target === editModal) editModal.classList.remove('show');
     });
 </script>
 
