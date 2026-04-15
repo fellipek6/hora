@@ -845,16 +845,27 @@
         const startTime = localStorage.getItem('timerStartTime');
         const timerRunning = localStorage.getItem('timerRunning') === 'true';
         
-        if (timerRunning && startTime) {
-            const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
-            seconds = parseInt(localStorage.getItem('timerSeconds') || 0) + elapsed;
+        seconds = parseInt(localStorage.getItem('timerSeconds') || 0);
+        
+        if (timerRunning) {
+            const base = parseInt(localStorage.getItem('timerBaseSeconds') || 0);
+            const start = parseInt(localStorage.getItem('timerStartTime') || 0);
+            seconds = base + Math.floor((Date.now() - start) / 1000);
             localStorage.setItem('timerSeconds', seconds);
-            updateDisplay();
-            document.getElementById('btn-toggle').click();
-        } else {
-            seconds = parseInt(localStorage.getItem('timerSeconds') || 0);
-            updateDisplay();
+            
+            timerInterval = setInterval(() => {
+                const base = parseInt(localStorage.getItem('timerBaseSeconds') || 0);
+                const start = parseInt(localStorage.getItem('timerStartTime') || 0);
+                seconds = base + Math.floor((Date.now() - start) / 1000);
+                localStorage.setItem('timerSeconds', seconds);
+                updateDisplay();
+            }, 1000);
+            
+            document.getElementById('btn-toggle').innerText = "Pausar Sessão";
+            document.getElementById('hourly-rate').disabled = true;
         }
+        
+        updateDisplay();
         
         updateHistoryUI();
         updateStatistics();
@@ -864,6 +875,17 @@
             if (e.code === 'Space') {
                 e.preventDefault();
                 toggleTimer();
+            }
+        });
+
+        // Recalcular tempo quando a página volta do segundo plano
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && timerInterval) {
+                const base = parseInt(localStorage.getItem('timerBaseSeconds') || 0);
+                const start = parseInt(localStorage.getItem('timerStartTime') || 0);
+                seconds = base + Math.floor((Date.now() - start) / 1000);
+                localStorage.setItem('timerSeconds', seconds);
+                updateDisplay();
             }
         });
     };
@@ -1008,6 +1030,8 @@
             rateInput.disabled = false;
             localStorage.setItem('timerRunning', 'false');
             localStorage.setItem('timerSeconds', seconds);
+            localStorage.removeItem('timerStartTime');
+            localStorage.removeItem('timerBaseSeconds');
         } else {
             const currentRate = parseFloat(rateInput.value) || 0;
             if (currentRate <= 0) return alert("Por favor, defina o valor da sua hora primeiro!");
@@ -1015,11 +1039,14 @@
             rateInput.disabled = true;
             btn.innerText = "Pausar Sessão";
             
+            localStorage.setItem('timerBaseSeconds', seconds.toString());
             localStorage.setItem('timerStartTime', Date.now().toString());
             localStorage.setItem('timerRunning', 'true');
             
             timerInterval = setInterval(() => {
-                seconds++;
+                const base = parseInt(localStorage.getItem('timerBaseSeconds') || 0);
+                const start = parseInt(localStorage.getItem('timerStartTime') || 0);
+                seconds = base + Math.floor((Date.now() - start) / 1000);
                 localStorage.setItem('timerSeconds', seconds);
                 updateDisplay();
             }, 1000);
@@ -1303,6 +1330,7 @@
         localStorage.setItem('timerSeconds', '0');
         localStorage.setItem('timerRunning', 'false');
         localStorage.removeItem('timerStartTime');
+        localStorage.removeItem('timerBaseSeconds');
         updateDisplay();
     }
 
