@@ -673,16 +673,6 @@
             <input type="number" id="daily-goal" placeholder="Meta do dia" onchange="saveConfig()">
         </div>
 
-        <div class="input-group">
-            <label>Meta Mensal (R$) - Opcional</label>
-            <input type="number" id="monthly-goal" placeholder="Meta do mês" onchange="saveConfig()">
-        </div>
-
-        <div class="input-group">
-            <label>Meta Total (R$) - Opcional</label>
-            <input type="number" id="total-goal" placeholder="Meta total" onchange="saveConfig()">
-        </div>
-
         <div class="display-box">
             <span class="label-small">Sessão Atual</span>
             <span id="time-display" class="val">00:00:00</span>
@@ -704,23 +694,13 @@
             </div>
         </div>
 
-        <div class="monthly-goal-section" id="monthly-goal-section" style="display: none;">
+        <div class="daily-goal-section" id="goal-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span class="label-small" style="color: var(--primary)">Progresso Mensal</span>
-                <span id="monthly-goal-percent" style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">0%</span>
+                <span class="label-small" style="color: var(--success)">Progresso da Meta</span>
+                <span id="goal-percent" style="font-size: 0.9rem; color: var(--success); font-weight: 600;">0%</span>
             </div>
             <div class="progress-bar">
-                <div class="progress-fill" id="monthly-goal-progress" style="width: 0%; background: var(--primary);"></div>
-            </div>
-        </div>
-
-        <div class="total-goal-section" id="total-goal-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span class="label-small" style="color: var(--warning)">Progresso Total</span>
-                <span id="total-goal-percent" style="font-size: 0.9rem; color: var(--warning); font-weight: 600;">0%</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="total-goal-progress" style="width: 0%; background: var(--warning);"></div>
+                <div class="progress-fill" id="goal-progress" style="width: 0%;"></div>
             </div>
         </div>
 
@@ -758,6 +738,37 @@
             <div class="stat-label" style="text-align: center; margin-bottom: 0.5rem;">Média de Ganho/Dia</div>
             <div class="stat-value" style="color: var(--warning); font-size: 1.6rem;" id="avg-per-day">R$ 0,00</div>
             <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: #64748b;">Baseado em dias com trabalho</div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label>Meta Mensal (R$) - Opcional</label>
+                <input type="number" id="monthly-goal" placeholder="Meta do mês" onchange="saveConfig()">
+            </div>
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <label>Meta Total (R$) - Opcional</label>
+                <input type="number" id="total-goal" placeholder="Meta total" onchange="saveConfig()">
+            </div>
+        </div>
+
+        <div class="monthly-goal-section" id="monthly-goal-section" style="display: none; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="label-small" style="color: var(--primary)">Progresso Mensal</span>
+                <span id="monthly-goal-percent" style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="monthly-goal-progress" style="width: 0%; background: var(--primary);"></div>
+            </div>
+        </div>
+
+        <div class="total-goal-section" id="total-goal-section" style="display: none; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="label-small" style="color: var(--warning)">Progresso Total</span>
+                <span id="total-goal-percent" style="font-size: 0.9rem; color: var(--warning); font-weight: 600;">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="total-goal-progress" style="width: 0%; background: var(--warning);"></div>
+            </div>
         </div>
 
         <div class="action-buttons" style="margin-top: 1.5rem;">
@@ -855,10 +866,6 @@
         <div class="chart-container">
             <h4>Ganhos ao Longo do Tempo</h4>
             <canvas id="earnings-chart"></canvas>
-        </div>
-        <div class="chart-container">
-            <h4>Progresso das Metas</h4>
-            <canvas id="progress-chart"></canvas>
         </div>
     </div>
 </div>
@@ -1343,7 +1350,6 @@
         if (modal.classList.contains('show')) {
             setTimeout(() => {
                 renderChart();
-                renderProgressChart();
             }, 300);
         }
     }
