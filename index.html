@@ -876,6 +876,47 @@
     let history = JSON.parse(localStorage.getItem('salaryHistory')) || [];
     let currentFilter = 'all';
     let chart = null;
+    let lastEarned = 0;
+    let lastGoalPercent = 0;
+    let lastMonthlyGoalPercent = 0;
+    let lastTotalGoalPercent = 0;
+    const numberAnimations = new Map();
+
+    function easeOutQuad(t) {
+        return t * (2 - t);
+    }
+
+    function animateNumber(element, from, to, duration, formatter) {
+        if (!element) return;
+        if (typeof from !== 'number' || typeof to !== 'number' || duration <= 0) {
+            element.innerText = formatter(to);
+            return;
+        }
+
+        const key = element.id || element;
+        const previousId = numberAnimations.get(key);
+        if (previousId) cancelAnimationFrame(previousId);
+
+        const startTime = performance.now();
+
+        function step(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const value = from + (to - from) * easeOutQuad(progress);
+            element.innerText = formatter(value);
+
+            if (progress < 1) {
+                const frameId = requestAnimationFrame(step);
+                numberAnimations.set(key, frameId);
+            } else {
+                element.innerText = formatter(to);
+                numberAnimations.delete(key);
+            }
+        }
+
+        const frameId = requestAnimationFrame(step);
+        numberAnimations.set(key, frameId);
+    }
 
     window.onload = () => {
         const savedRate = localStorage.getItem('hourlyRate');
@@ -954,9 +995,15 @@
 
         const currentRate = parseFloat(document.getElementById('hourly-rate').value) || 0;
         const earned = (currentRate / 3600) * seconds;
-        document.getElementById('money-display').innerText = 
-            earned.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        
+        animateNumber(
+            document.getElementById('money-display'),
+            lastEarned,
+            earned,
+            900,
+            (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        );
+        lastEarned = earned;
+
         // Mostrar botão de recebimento
         document.getElementById('btn-receive').style.display = earned > 0 ? 'block' : 'none';
         
@@ -967,7 +1014,14 @@
             const todayEarned = getTodayEarnings();
             const total = todayEarned + earned;
             const percent = Math.min((total / dailyGoal) * 100, 100);
-            document.getElementById('goal-percent').innerText = Math.round(percent) + '%';
+            animateNumber(
+                document.getElementById('goal-percent'),
+                lastGoalPercent,
+                percent,
+                900,
+                (value) => Math.round(value) + '%'
+            );
+            lastGoalPercent = percent;
             document.getElementById('goal-progress').style.width = percent + '%';
         } else {
             document.getElementById('goal-section').style.display = 'none';
@@ -979,7 +1033,14 @@
             const monthlyEarned = getMonthlyEarnings();
             const total = monthlyEarned + earned;
             const percent = Math.min((total / monthlyGoal) * 100, 100);
-            document.getElementById('monthly-goal-percent').innerText = Math.round(percent) + '%';
+            animateNumber(
+                document.getElementById('monthly-goal-percent'),
+                lastMonthlyGoalPercent,
+                percent,
+                900,
+                (value) => Math.round(value) + '%'
+            );
+            lastMonthlyGoalPercent = percent;
             document.getElementById('monthly-goal-progress').style.width = percent + '%';
         } else {
             document.getElementById('monthly-goal-section').style.display = 'none';
@@ -991,7 +1052,14 @@
             const totalEarned = getTotalEarnings();
             const total = totalEarned + earned;
             const percent = Math.min((total / totalGoal) * 100, 100);
-            document.getElementById('total-goal-percent').innerText = Math.round(percent) + '%';
+            animateNumber(
+                document.getElementById('total-goal-percent'),
+                lastTotalGoalPercent,
+                percent,
+                900,
+                (value) => Math.round(value) + '%'
+            );
+            lastTotalGoalPercent = percent;
             document.getElementById('total-goal-progress').style.width = percent + '%';
         } else {
             document.getElementById('total-goal-section').style.display = 'none';
